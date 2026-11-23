@@ -183,15 +183,15 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 
-/* e = picture, zh = 國語名稱, en / ens = American English singular / plural */
+/* e = picture, zh = 國語名稱, m = 台灣常用量詞, en / ens = American English singular / plural */
 const ITEMS=[
-  {e:"🍎",zh:"蘋果",en:"apple",ens:"apples"},{e:"🍓",zh:"草莓",en:"strawberry",ens:"strawberries"},
-  {e:"🐟",zh:"小魚",en:"fish",ens:"fish"},{e:"🚗",zh:"小汽車",en:"car",ens:"cars"},
-  {e:"🎈",zh:"氣球",en:"balloon",ens:"balloons"},{e:"🐥",zh:"小雞",en:"chick",ens:"chicks"},
-  {e:"🍪",zh:"餅乾",en:"cookie",ens:"cookies"},{e:"⭐",zh:"星星",en:"star",ens:"stars"},
-  {e:"🌰",zh:"松果",en:"pinecone",ens:"pinecones"},{e:"🦋",zh:"蝴蝶",en:"butterfly",ens:"butterflies"},
-  {e:"🍩",zh:"甜甜圈",en:"donut",ens:"donuts"},{e:"🐞",zh:"瓢蟲",en:"ladybug",ens:"ladybugs"},
-  {e:"🍌",zh:"香蕉",en:"banana",ens:"bananas"},{e:"🧸",zh:"小熊",en:"teddy bear",ens:"teddy bears"}];
+  {e:"🍎",zh:"蘋果",m:"顆",en:"apple",ens:"apples"},{e:"🍓",zh:"草莓",m:"顆",en:"strawberry",ens:"strawberries"},
+  {e:"🐟",zh:"小魚",m:"條",en:"fish",ens:"fish"},{e:"🚗",zh:"小汽車",m:"輛",en:"car",ens:"cars"},
+  {e:"🎈",zh:"氣球",m:"顆",en:"balloon",ens:"balloons"},{e:"🐥",zh:"小雞",m:"隻",en:"chick",ens:"chicks"},
+  {e:"🍪",zh:"餅乾",m:"片",en:"cookie",ens:"cookies"},{e:"⭐",zh:"星星",m:"顆",en:"star",ens:"stars"},
+  {e:"🌰",zh:"松果",m:"顆",en:"pinecone",ens:"pinecones"},{e:"🦋",zh:"蝴蝶",m:"隻",en:"butterfly",ens:"butterflies"},
+  {e:"🍩",zh:"甜甜圈",m:"個",en:"donut",ens:"donuts"},{e:"🐞",zh:"瓢蟲",m:"隻",en:"ladybug",ens:"ladybugs"},
+  {e:"🍌",zh:"香蕉",m:"根",en:"banana",ens:"bananas"},{e:"🧸",zh:"小熊",m:"隻",en:"teddy bear",ens:"teddy bears"}];
 const byE=e=>ITEMS.find(i=>i.e===e);
 const LEAVE=[["🎈","飛走了","flew away"],["🐥","跑走了","ran away"],["🍪","被吃掉了","got eaten"],["🐟","游走了","swam away"],["🦋","飛走了","flew away"],["🍎","被吃掉了","got eaten"]];
 const STICKERS=["🐰","🐻","🐼","🦊","🐯","🐨","🦁","🐸","🐧","🦄","🐳","🦖","🐙","🦉","🐢","🐬","🦒","🐝","🦩","🐲"];
@@ -277,8 +277,8 @@ const hl=w=>`<b style="color:var(--berry);font-weight:400">${w}</b>`;
 
 const GEN={
   count(){const n=rand(1,L().count),it=pick(ITEMS);
-    return{text:EN()?`How many ${it.e}?`:`有幾個 ${it.e}？`,
-      voice:EN()?`Let's count! How many ${it.ens} are there? Tap them to count one by one!`:`數數看，有幾個${it.zh}？可以點一點，一個一個數喔！`,
+    return{text:EN()?`How many ${it.e}?`:`有幾${it.m} ${it.e}？`,
+      voice:EN()?`Let's count! How many ${it.ens} are there? Tap them to count one by one!`:`數數看，有幾${it.m}${it.zh}？可以點一點，一個一個數喔！`,
       build:st=>st.append(itemsBox(it.e,n)),opts:numOpts(n,1,L().count)}},
   compare(){const max=L().cmp;let a=rand(1,max),b=rand(1,max);while(a===b)b=rand(1,max);
     const it=pick(ITEMS),more=save.level==="easy"||Math.random()<.6;
@@ -290,12 +290,12 @@ const GEN={
       build:()=>{},big:true,opts:[{html:mk(a),ok:ansLeft},{html:mk(b),ok:!ansLeft}]}},
   add(){const lv=L();
     if(lv.sub&&Math.random()<.4){const [e,zv,ev]=pick(LEAVE),it=byE(e);const a=rand(3,lv.add),b=rand(1,a-1);
-      return{text:EN()?`${a} ${e}, ${b} ${ev}. How many are left?`:`${a} 個 ${e}，${b} 個${zv}，還剩幾個？`,
-        voice:EN()?`There are ${a} ${it.ens}. ${b} ${ev}. How many ${it.ens} are left?`:`${a}個${it.zh}，${b}個${zv}，還剩下幾個${it.zh}？`,
+      return{text:EN()?`${a} ${e}, ${b} ${ev}. How many are left?`:`${a} ${it.m} ${e}，${b} ${it.m}${zv}，還剩幾${it.m}？`,
+        voice:EN()?`There are ${a} ${it.ens}. ${b} ${ev}. How many ${it.ens} are left?`:`${a}${it.m}${it.zh}，${b}${it.m}${zv}，還剩下幾${it.m}${it.zh}？`,
         build:st=>{const r=el("div","eq");r.append(itemsBox(e,a,b),el("span","word",t().left),el("div","qbox","?"));st.append(r)},opts:numOpts(a-b,0,lv.add)}}
     const s=rand(2,lv.add),a=rand(1,s-1),b=s-a,it=pick(ITEMS);
-    return{text:EN()?`${a} ${it.e} and ${b} more. How many in all?`:`${a} 個 ${it.e} 再來 ${b} 個，一共幾個？`,
-      voice:EN()?`${a} ${noun(it,a)}, and ${b} more. How many ${it.ens} in all?`:`${a}個${it.zh}，再來${b}個${it.zh}，一共有幾個？`,
+    return{text:EN()?`${a} ${it.e} and ${b} more. How many in all?`:`${a} ${it.m} ${it.e} 再來 ${b} ${it.m}，一共幾${it.m}？`,
+      voice:EN()?`${a} ${noun(it,a)}, and ${b} more. How many ${it.ens} in all?`:`${a}${it.m}${it.zh}，再來${b}${it.m}${it.zh}，一共有幾${it.m}？`,
       build:st=>{const r=el("div","eq"),g1=el("div","grp"),g2=el("div","grp");g1.append(itemsBox(it.e,a));g2.append(itemsBox(it.e,b));
         r.append(g1,el("span","sym","+"),g2,el("span","sym","="),el("div","qbox","?"));st.append(r)},opts:numOpts(s,1,lv.add)}},
   pattern(){const kinds=save.level==="easy"?["AB","AAB","ABB"]:["ABC","AABB","ABB","AAB","ABAC"];
