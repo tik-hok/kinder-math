@@ -257,7 +257,8 @@ const GEN={
 
 /* ---------- game flow ---------- */
 const TOTAL=5;let game={};
-function start(mode){game={mode,i:0,first:0,lock:false};$("#home").hidden=true;$("#win").hidden=true;$("#game").hidden=false;scrollTo(0,0);next()}
+let gameId=0;
+function start(mode){game={mode,i:0,first:0,lock:false,id:++gameId};$("#home").hidden=true;$("#win").hidden=true;$("#game").hidden=false;scrollTo(0,0);next()}
 function next(){if(game.i>=TOTAL)return finish();
   const q=GEN[game.mode]();game.q=q;game.tries=0;game.tap=0;game.lock=false;
   $("#cones").innerHTML="";for(let i=0;i<TOTAL;i++)$("#cones").append(el("span","cone"+(i<game.i?" on":""),"🌰"));
@@ -269,7 +270,7 @@ function face(c){const f=$("#face");f.classList.remove("yay","hmm");void f.offse
 function check(b,ok){if(game.lock||b.disabled)return;
   if(ok){game.lock=true;b.classList.add("right");ding();face("yay");if(game.tries===0)game.first++;
     say(pick(PRAISE));burst(b,24);$("#cones").children[game.i].classList.add("on");
-    setTimeout(()=>{game.i++;next()},1500)}
+    const id=game.id;setTimeout(()=>{if(id!==game.id||$("#game").hidden)return;game.i++;next()},1500)}
   else{game.tries++;b.classList.add("wrong");b.disabled=true;boop();face("hmm");
     if(game.tries>=2){const r=[...$("#opts").children].find((x,i)=>game.q.opts[i].ok);r&&r.classList.add("hint");say("松松給你一個提示，看看會跳的那一個！")}
     else say(pick(RETRY))}}
@@ -278,7 +279,7 @@ function finish(){const stars=game.first>=4?3:2;save.stars+=stars;save.mode[game
   $("#wtitle").textContent=stars===3?"超級厲害！":"太棒了！";$("#wstars").textContent="⭐".repeat(stars);
   $("#wsticker").textContent=sticker;$("#wmsg").textContent=save.rounds<=STICKERS.length?`得到新貼紙！已收集 ${Math.min(save.rounds,STICKERS.length)} / ${STICKERS.length} 張`:`你已經收集全部貼紙了，真是數學大王！`;
   $("#win").hidden=false;fanfare();confetti();say(`${stars===3?"超級厲害":"太棒了"}！你得到${stars}顆星星，還有一張新貼紙！`)}
-function goHome(){try{speechSynthesis.cancel()}catch(e){};$("#game").hidden=true;$("#win").hidden=true;$("#home").hidden=false;renderHome()}
+function goHome(){try{speechSynthesis.cancel()}catch(e){};gameId++;game.id=-1;$("#game").hidden=true;$("#win").hidden=true;$("#home").hidden=false;renderHome()}
 $("#back").onclick=goHome;$("#home2").onclick=goHome;$("#replay").onclick=()=>start(game.mode);$("#again").onclick=()=>game.q&&say(game.q.voice);
 
 /* ---------- confetti ---------- */
@@ -286,7 +287,7 @@ const cv=$("#fx"),cx=cv.getContext("2d");let parts=[],raf=0;
 const COLORS=["#FFC93C","#E4505B","#3B8B57","#4C7FD8","#FF8FB1","#8A5A35"];
 function fit(){cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio}
 addEventListener("resize",fit);fit();
-function spawn(x,y,n,spread){for(let i=0;i<n;i++)parts.push({x,y,vx:(Math.random()-.5)*spread,vy:-Math.random()*spread*.9-2,r:4+Math.random()*5,c:pick(COLORS),a:Math.random()*6,life:90+Math.random()*50})}
+function spawn(x,y,n,spread){if(parts.length>300)parts.splice(0,parts.length-300+n);for(let i=0;i<n;i++)parts.push({x,y,vx:(Math.random()-.5)*spread,vy:-Math.random()*spread*.9-2,r:4+Math.random()*5,c:pick(COLORS),a:Math.random()*6,life:90+Math.random()*50})}
 function loop(){cx.clearRect(0,0,cv.width,cv.height);const d=devicePixelRatio;
   parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.25;p.a+=.2;p.life--;cx.save();cx.translate(p.x*d,p.y*d);cx.rotate(p.a);cx.fillStyle=p.c;cx.fillRect(-p.r*d/2,-p.r*d/4,p.r*d,p.r*d/2);cx.restore()});
   parts=parts.filter(p=>p.life>0&&p.y<innerHeight+40);raf=parts.length?requestAnimationFrame(loop):0}
