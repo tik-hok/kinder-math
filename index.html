@@ -124,31 +124,41 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:30;width:100%;heigh
 </style>
 </head>
 <body>
+<style>
+.langs{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.langs .lv{padding:8px 16px;font-size:17px}
+.vnote{background:#FFF3C9;border-radius:14px;padding:8px 14px;font-size:15px;margin-top:10px;color:var(--bark)}
+</style>
 <canvas id="fx"></canvas>
 <div class="app">
   <!-- HOME -->
   <section id="home">
     <div class="hero">
-      <button class="mascot" id="mascot" aria-label="聽松松說話">🐿️</button>
-      <div class="bubble"><h1>松果數學樂園</h1><span id="greet">嗨！我是松松，選一個遊戲，一起來玩數學吧！</span></div>
+      <button class="mascot" id="mascot" aria-label="Songsong">🐿️</button>
+      <div class="bubble"><h1 data-t="title">松果數學樂園</h1><span data-t="greet"></span></div>
       <div class="bank"><div class="chip">⭐ <span id="starN">0</span></div><div class="chip">🌰 <span id="coneN">0</span></div></div>
     </div>
-    <div class="levels" role="group" aria-label="難度">
-      <button class="lv" data-lv="easy" aria-pressed="true">🌱 小松果<small>數到 10・加到 5</small></button>
-      <button class="lv" data-lv="hard" aria-pressed="false">🌳 大松果<small>數到 20・加減到 10</small></button>
+    <div class="langs" role="group" aria-label="語言 Language">
+      <button class="lv" data-lang="zh" aria-pressed="true">🗣️ 中文（台灣）</button>
+      <button class="lv" data-lang="en" aria-pressed="false">🗣️ English (US)</button>
+    </div>
+    <p class="vnote" id="vnote" hidden></p>
+    <div class="levels" role="group" aria-label="難度 Level">
+      <button class="lv" data-lv="easy" aria-pressed="true"></button>
+      <button class="lv" data-lv="hard" aria-pressed="false"></button>
     </div>
     <div class="modes" id="modes"></div>
-    <h2>🏆 我的貼紙收藏</h2>
+    <h2 data-t="shelf"></h2>
     <div class="shelf" id="shelf"></div>
-    <p class="tip">每玩完一關（5 題）就能得到一張新貼紙！點一點東西可以一個一個數喔。</p>
+    <p class="tip" data-t="tip"></p>
   </section>
 
   <!-- GAME -->
   <section id="game" hidden>
     <div class="top">
-      <button class="btn" id="back">🏠 回家</button>
+      <button class="btn" id="back" data-t="back"></button>
       <div class="cones" id="cones"></div>
-      <button class="btn" id="again">🔊 再聽一次</button>
+      <button class="btn" id="again" data-t="again"></button>
     </div>
     <div class="ask"><span class="face" id="face">🐿️</span><div class="qtext" id="qtext"></div></div>
     <div class="stage" id="stage"></div>
@@ -158,11 +168,11 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:30;width:100%;heigh
 
 <div class="win" id="win" hidden>
   <div class="wcard">
-    <h3 id="wtitle">太棒了！</h3>
+    <h3 id="wtitle"></h3>
     <div class="wstars" id="wstars">⭐⭐⭐</div>
     <div class="wsticker" id="wsticker">🐰</div>
-    <p id="wmsg">你得到一張新貼紙！</p>
-    <div class="wbtns"><button class="btn go" id="replay">🔁 再玩一次</button><button class="btn" id="home2">🏠 回家</button></div>
+    <p id="wmsg"></p>
+    <div class="wbtns"><button class="btn go" id="replay" data-t="replay"></button><button class="btn" id="home2" data-t="back"></button></div>
   </div>
 </div>
 
@@ -173,85 +183,134 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 
-const ITEMS=[["🍎","蘋果"],["🍓","草莓"],["🐟","小魚"],["🚗","小汽車"],["🎈","氣球"],["🐥","小雞"],["🍪","餅乾"],["⭐","星星"],["🌰","松果"],["🦋","蝴蝶"],["🍩","甜甜圈"],["🐞","瓢蟲"],["🍌","香蕉"],["🧸","小熊"]];
-const LEAVE=[["🎈","氣球","飛走了"],["🐥","小雞","跑走了"],["🍪","餅乾","被吃掉了"],["🐟","小魚","游走了"],["🦋","蝴蝶","飛走了"],["🍎","蘋果","被吃掉了"]];
+/* e = picture, zh = 國語名稱, en / ens = American English singular / plural */
+const ITEMS=[
+  {e:"🍎",zh:"蘋果",en:"apple",ens:"apples"},{e:"🍓",zh:"草莓",en:"strawberry",ens:"strawberries"},
+  {e:"🐟",zh:"小魚",en:"fish",ens:"fish"},{e:"🚗",zh:"小汽車",en:"car",ens:"cars"},
+  {e:"🎈",zh:"氣球",en:"balloon",ens:"balloons"},{e:"🐥",zh:"小雞",en:"chick",ens:"chicks"},
+  {e:"🍪",zh:"餅乾",en:"cookie",ens:"cookies"},{e:"⭐",zh:"星星",en:"star",ens:"stars"},
+  {e:"🌰",zh:"松果",en:"pinecone",ens:"pinecones"},{e:"🦋",zh:"蝴蝶",en:"butterfly",ens:"butterflies"},
+  {e:"🍩",zh:"甜甜圈",en:"donut",ens:"donuts"},{e:"🐞",zh:"瓢蟲",en:"ladybug",ens:"ladybugs"},
+  {e:"🍌",zh:"香蕉",en:"banana",ens:"bananas"},{e:"🧸",zh:"小熊",en:"teddy bear",ens:"teddy bears"}];
+const byE=e=>ITEMS.find(i=>i.e===e);
+const LEAVE=[["🎈","飛走了","flew away"],["🐥","跑走了","ran away"],["🍪","被吃掉了","got eaten"],["🐟","游走了","swam away"],["🦋","飛走了","flew away"],["🍎","被吃掉了","got eaten"]];
 const STICKERS=["🐰","🐻","🐼","🦊","🐯","🐨","🦁","🐸","🐧","🦄","🐳","🦖","🐙","🦉","🐢","🐬","🦒","🐝","🦩","🐲"];
-const PRAISE=["答對了！好棒！","哇！你好厲害！","太聰明了！","完全正確！","讚喔！你是數學小高手！","耶！答對了！"];
-const RETRY=["差一點點，再試一次！","沒關係，再想想看喔！","加油！再數一次看看！"];
-const MODES={
-  count:{name:"數數看",ic:"🔢",d:"有幾個呢？"},
-  compare:{name:"比多少",ic:"⚖️",d:"哪邊比較多？"},
-  add:{name:"加加看",ic:"➕",d:"合起來有幾個？"},
-  pattern:{name:"找規律",ic:"🧩",d:"下一個是誰？"},
-  seq:{name:"數字火車",ic:"🚂",d:"少了哪一號？"}
+
+const T={
+ zh:{title:"松果數學樂園",greet:"嗨！我是松松，選一個遊戲，一起來玩數學吧！",greetV:"嗨！我是松松！選一個遊戲，一起來玩數學吧！",
+   easy:"🌱 小松果<small>數到 10・加到 5</small>",hard:"🌳 大松果<small>數到 20・加減到 10</small>",easyV:"小松果，簡單模式！",hardV:"大松果，挑戰模式！",
+   shelf:"🏆 我的貼紙收藏",tip:"每玩完一關（5 題）就能得到一張新貼紙！點一點東西可以一個一個數喔。",
+   back:"🏠 回家",again:"🔊 再聽一次",replay:"🔁 再玩一次",left:"還剩",
+   praise:["答對了！好棒！","哇！你好厲害！","太聰明了！","完全正確！","讚喔！你是數學小高手！","耶！答對了！"],
+   retry:["差一點點，再試一次！","沒關係，再想想看喔！","加油！再數一次看看！"],
+   hint:"松松給你一個提示，看看會跳的那一個！",
+   win3:"超級厲害！",win2:"太棒了！",msg:(n,t)=>`得到新貼紙！已收集 ${n} / ${t} 張`,msgAll:"你已經收集全部貼紙了，真是數學大王！",
+   winV:(w,s)=>`${w}你得到${s}顆星星，還有一張新貼紙！`,
+   noVoice:"這台裝置找不到台灣國語的語音，聽起來可能是大陸口音。建議用 Microsoft Edge 或 Google Chrome 開啟。",
+   modes:{count:["數數看","有幾個呢？"],compare:["比多少","哪邊比較多？"],add:["加加看","合起來有幾個？"],pattern:["找規律","下一個是誰？"],seq:["數字火車","少了哪一號？"]}},
+ en:{title:"Pinecone Math Park",greet:"Hi! I'm Songsong. Pick a game and let's play with numbers!",greetV:"Hi! I'm Songsong! Pick a game, and let's play with numbers!",
+   easy:"🌱 Little Pinecone<small>Count to 10 · add to 5</small>",hard:"🌳 Big Pinecone<small>Count to 20 · add &amp; take away to 10</small>",easyV:"Little Pinecone. Easy mode!",hardV:"Big Pinecone. Challenge mode!",
+   shelf:"🏆 My Sticker Collection",tip:"Finish a round (5 questions) to win a new sticker! Tap the pictures to count them one by one.",
+   back:"🏠 Home",again:"🔊 Listen again",replay:"🔁 Play again",left:"left",
+   praise:["Great job!","You got it!","Super smart!","That's right!","Wow! You're a math star!","Yay! Correct!"],
+   retry:["So close! Try again!","That's okay. Think again!","You can do it! Count once more!"],
+   hint:"Here's a hint from Songsong. Look at the bouncing one!",
+   win3:"Amazing!",win2:"Great job!",msg:(n,t)=>`New sticker! You have ${n} of ${t}.`,msgAll:"You collected every sticker. You're a math champion!",
+   winV:(w,s)=>`${w} You earned ${s} stars and a new sticker!`,
+   noVoice:"這台裝置找不到美式英文的語音。建議用 Microsoft Edge 或 Google Chrome 開啟。",
+   modes:{count:["Count It","How many?"],compare:["More or Fewer","Which has more?"],add:["Add It Up","How many in all?"],pattern:["Patterns","What comes next?"],seq:["Number Train","Which number is missing?"]}}
 };
+const MODES={count:"🔢",compare:"⚖️",add:"➕",pattern:"🧩",seq:"🚂"};
 
 /* ---------- saved progress (per browser) ---------- */
-let save={level:"easy",stars:0,rounds:0,mode:{}};
+let save={level:"easy",lang:"zh",stars:0,rounds:0,mode:{}};
 try{const s=JSON.parse(localStorage.getItem("pinecone-math")||"null");if(s)save=Object.assign(save,s)}catch(e){}
 const store=()=>{try{localStorage.setItem("pinecone-math",JSON.stringify(save))}catch(e){}};
 const L=()=>save.level==="easy"?{count:10,cmp:7,add:5,seq:10,sub:false}:{count:20,cmp:12,add:10,seq:20,sub:true};
+const t=()=>T[save.lang];
+const EN=()=>save.lang==="en";
 
-/* ---------- voice & sounds ---------- */
-let voice=null;
-function pickVoice(){try{const vs=speechSynthesis.getVoices();voice=vs.find(v=>/zh[-_]TW/i.test(v.lang))||vs.find(v=>/zh[-_](HK|Hant)/i.test(v.lang))||vs.find(v=>/^zh/i.test(v.lang))||null}catch(e){}}
-try{pickVoice();speechSynthesis.onvoiceschanged=pickVoice}catch(e){}
-function say(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="zh-TW";if(voice)u.voice=voice;u.rate=.9;u.pitch=1.25;speechSynthesis.speak(u)}catch(e){}}
+/* ---------- voices: Taiwan Mandarin (zh-TW) and American English (en-US) only ---------- */
+const V={zh:null,en:null};let voicesLoaded=false;
+function best(vs,langRe,prefs){const c=vs.filter(v=>langRe.test(v.lang));for(const p of prefs){const f=c.find(v=>p.test(v.name));if(f)return f}return c[0]||null}
+function pickVoices(){try{const vs=speechSynthesis.getVoices();if(!vs.length)return;voicesLoaded=true;
+  V.zh=best(vs,/^zh[-_]TW/i,[/HsiaoChen.*(Online|Natural)/i,/HsiaoYu.*(Online|Natural)/i,/(Online|Natural)/i,/Google/i,/Meijia|美佳/i,/Hanhan|Yating|Zhiwei/i]);
+  V.en=best(vs,/^en[-_]US/i,[/(Ana|Jenny|Aria).*(Online|Natural)/i,/(Online|Natural)/i,/Google US/i,/Samantha/i,/Zira/i]);
+  voiceNote()}catch(e){}}
+function voiceNote(){const n=$("#vnote");n.hidden=!(voicesLoaded&&!V[save.lang]);n.textContent=t().noVoice}
+try{pickVoices();speechSynthesis.onvoiceschanged=pickVoices}catch(e){}
+function say(txt){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);
+  if(EN()){u.lang="en-US";u.rate=.88;u.pitch=1.1}else{u.lang="zh-TW";u.rate=.9;u.pitch=1.2}
+  if(V[save.lang])u.voice=V[save.lang];speechSynthesis.speak(u)}catch(e){}}
+
 let ac=null;
-function tone(freqs,dur=.12,type="sine",vol=.18){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();let t=ac.currentTime;freqs.forEach(f=>{const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+dur);t+=dur*.8})}catch(e){}}
+function tone(freqs,dur=.12,type="sine",vol=.18){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();let tt=ac.currentTime;freqs.forEach(f=>{const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(vol,tt);g.gain.exponentialRampToValueAtTime(.001,tt+dur);o.connect(g).connect(ac.destination);o.start(tt);o.stop(tt+dur);tt+=dur*.8})}catch(e){}}
 const ding=()=>tone([660,880,1320],.14,"triangle");
 const boop=()=>tone([300,220],.16,"sine",.12);
 const popS=n=>tone([500+n*40],.08,"triangle",.14);
 const fanfare=()=>tone([523,659,784,1047,784,1047],.16,"triangle",.2);
 
 /* ---------- home ---------- */
-function renderHome(){
+function applyLang(){document.documentElement.lang=EN()?"en-US":"zh-Hant-TW";
+  document.querySelectorAll("[data-t]").forEach(n=>n.innerHTML=t()[n.dataset.t]);
+  document.querySelectorAll(".lv[data-lv]").forEach(b=>b.innerHTML=t()[b.dataset.lv]);
+  document.querySelectorAll(".lv[data-lang]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lang===save.lang));
+  voiceNote()}
+function renderHome(){applyLang();
   $("#starN").textContent=save.stars;$("#coneN").textContent=save.rounds;
-  document.querySelectorAll(".lv").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lv===save.level));
+  document.querySelectorAll(".lv[data-lv]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lv===save.level));
   const m=$("#modes");m.innerHTML="";
-  for(const k in MODES){const md=MODES[k];const b=el("button","mode",`<div class="ic">${md.ic}</div><b>${md.name}</b><span>${md.d}</span><i>⭐ ${save.mode[k]||0}</i>`);b.onclick=()=>start(k);m.append(b)}
+  for(const k in MODES){const [nm,d]=t().modes[k];const b=el("button","mode",`<div class="ic">${MODES[k]}</div><b>${nm}</b><span>${d}</span><i>⭐ ${save.mode[k]||0}</i>`);b.onclick=()=>start(k);m.append(b)}
   const sh=$("#shelf");sh.innerHTML="";
   STICKERS.forEach((s,i)=>sh.append(i<save.rounds?el("div","st",s):el("div","st lock","?")));
 }
-document.querySelectorAll(".lv").forEach(b=>b.onclick=()=>{save.level=b.dataset.lv;store();renderHome();say(save.level==="easy"?"小松果，簡單模式":"大松果，挑戰模式！")});
-$("#mascot").onclick=()=>{say("嗨！我是松松！選一個遊戲，一起來玩數學吧！");$("#mascot").animate([{transform:"scale(1)"},{transform:"scale(1.25) rotate(10deg)"},{transform:"scale(1)"}],{duration:500})};
+document.querySelectorAll(".lv[data-lv]").forEach(b=>b.onclick=()=>{save.level=b.dataset.lv;store();renderHome();say(save.level==="easy"?t().easyV:t().hardV)});
+document.querySelectorAll(".lv[data-lang]").forEach(b=>b.onclick=()=>{save.lang=b.dataset.lang;store();renderHome();say(t().greetV)});
+$("#mascot").onclick=()=>{say(t().greetV);$("#mascot").animate([{transform:"scale(1)"},{transform:"scale(1.25) rotate(10deg)"},{transform:"scale(1)"}],{duration:500})};
 
 /* ---------- question makers ---------- */
 function numOpts(ans,lo,hi){const s=new Set([ans]);let guard=0;while(s.size<3&&guard++<50){const d=ans+pick([-2,-1,1,2,3,-3]);if(d>=lo&&d<=hi)s.add(d)}return [...s].sort((a,b)=>a-b).map(v=>({html:v,ok:v===ans}))}
 function itemsBox(emo,n,gone=0){const box=el("div","items");for(let i=0;i<n;i++){const it=el("div","it",emo);if(i>=n-gone)it.classList.add("gone");else it.onclick=()=>tapCount(it);box.append(it)}return box}
 function tapCount(it){if(it.classList.contains("done")||game.lock)return;game.tap++;it.dataset.n=game.tap;it.classList.add("done");popS(game.tap);say(String(game.tap))}
+const noun=(it,n)=>n===1?it.en:it.ens;
+const hl=w=>`<b style="color:var(--berry);font-weight:400">${w}</b>`;
 
 const GEN={
   count(){const n=rand(1,L().count),it=pick(ITEMS);
-    return{text:`有幾個 ${it[0]}？`,voice:`數數看，有幾個${it[1]}？可以點一點，一個一個數喔！`,
-      build:st=>st.append(itemsBox(it[0],n)),opts:numOpts(n,1,L().count)}},
+    return{text:EN()?`How many ${it.e}?`:`有幾個 ${it.e}？`,
+      voice:EN()?`Let's count! How many ${it.ens} are there? Tap them to count one by one!`:`數數看，有幾個${it.zh}？可以點一點，一個一個數喔！`,
+      build:st=>st.append(itemsBox(it.e,n)),opts:numOpts(n,1,L().count)}},
   compare(){const max=L().cmp;let a=rand(1,max),b=rand(1,max);while(a===b)b=rand(1,max);
-    const it=pick(ITEMS),more=save.level==="easy"||Math.random()<.6,word=more?"比較多":"比較少";
+    const it=pick(ITEMS),more=save.level==="easy"||Math.random()<.6;
     const ansLeft=more?a>b:a<b;
-    const mk=n=>{const d=el("div","items");for(let i=0;i<n;i++)d.append(el("div","it",it[0]));return d.outerHTML};
-    return{text:`哪一邊的 ${it[0]} <b style="color:var(--berry);font-weight:400">${word}</b>？`,voice:`哪一邊的${it[1]}${word}？點那一邊！`,
+    const mk=n=>{const d=el("div","items");for(let i=0;i<n;i++)d.append(el("div","it",it.e));return d.outerHTML};
+    const w=EN()?(more?"more":"fewer"):(more?"比較多":"比較少");
+    return{text:EN()?`Which side has ${hl(w)} ${it.e}?`:`哪一邊的 ${it.e} ${hl(w)}？`,
+      voice:EN()?`Which side has ${w} ${it.ens}? Tap that side!`:`哪一邊的${it.zh}${w}？點那一邊！`,
       build:()=>{},big:true,opts:[{html:mk(a),ok:ansLeft},{html:mk(b),ok:!ansLeft}]}},
   add(){const lv=L();
-    if(lv.sub&&Math.random()<.4){const [e,nm,verb]=pick(LEAVE);const a=rand(3,lv.add),b=rand(1,a-1);
-      return{text:`${a} 個 ${e}，${b} 個${verb}，還剩幾個？`,voice:`${a}個${nm}，${b}個${verb}，還剩下幾個${nm}？`,
-        build:st=>{const r=el("div","eq");r.append(itemsBox(e,a,b),el("span","word","還剩"),el("div","qbox","?"));st.append(r)},opts:numOpts(a-b,0,lv.add)}}
+    if(lv.sub&&Math.random()<.4){const [e,zv,ev]=pick(LEAVE),it=byE(e);const a=rand(3,lv.add),b=rand(1,a-1);
+      return{text:EN()?`${a} ${e}, ${b} ${ev}. How many are left?`:`${a} 個 ${e}，${b} 個${zv}，還剩幾個？`,
+        voice:EN()?`There are ${a} ${it.ens}. ${b} ${ev}. How many ${it.ens} are left?`:`${a}個${it.zh}，${b}個${zv}，還剩下幾個${it.zh}？`,
+        build:st=>{const r=el("div","eq");r.append(itemsBox(e,a,b),el("span","word",t().left),el("div","qbox","?"));st.append(r)},opts:numOpts(a-b,0,lv.add)}}
     const s=rand(2,lv.add),a=rand(1,s-1),b=s-a,it=pick(ITEMS);
-    return{text:`${a} 個 ${it[0]} 再來 ${b} 個，一共幾個？`,voice:`${a}個${it[1]}，再來${b}個${it[1]}，一共有幾個？`,
-      build:st=>{const r=el("div","eq"),g1=el("div","grp"),g2=el("div","grp");g1.append(itemsBox(it[0],a));g2.append(itemsBox(it[0],b));
+    return{text:EN()?`${a} ${it.e} and ${b} more. How many in all?`:`${a} 個 ${it.e} 再來 ${b} 個，一共幾個？`,
+      voice:EN()?`${a} ${noun(it,a)}, and ${b} more. How many ${it.ens} in all?`:`${a}個${it.zh}，再來${b}個${it.zh}，一共有幾個？`,
+      build:st=>{const r=el("div","eq"),g1=el("div","grp"),g2=el("div","grp");g1.append(itemsBox(it.e,a));g2.append(itemsBox(it.e,b));
         r.append(g1,el("span","sym","+"),g2,el("span","sym","="),el("div","qbox","?"));st.append(r)},opts:numOpts(s,1,lv.add)}},
   pattern(){const kinds=save.level==="easy"?["AB","AAB","ABB"]:["ABC","AABB","ABB","AAB","ABAC"];
-    const k=pick(kinds),pool=shuffle(ITEMS).slice(0,4),map={A:pool[0][0],B:pool[1][0],C:pool[2][0]};
+    const k=pick(kinds),pool=shuffle(ITEMS).slice(0,4).map(i=>i.e),map={A:pool[0],B:pool[1],C:pool[2]};
     const len=k.length>=4?k.length*2:k.length*2+(k.length===2?2:1);
     const seq=[];for(let i=0;i<=len;i++)seq.push(map[k[i%k.length]]);
-    const ans=seq.pop();const choices=shuffle([...new Set([map.A,map.B,map.C||pool[3][0],pool[3][0]])]).slice(0,3);
+    const ans=seq.pop();const choices=shuffle([...new Set([map.A,map.B,map.C||pool[3],pool[3]])]).slice(0,3);
     if(!choices.includes(ans))choices[0]=ans;
-    return{text:"下一個是誰？",voice:"找找看規律，排排隊，下一個是誰呢？",
+    return{text:EN()?"What comes next?":"下一個是誰？",voice:EN()?"Look at the pattern. What comes next?":"找找看規律，排排隊，下一個是誰呢？",
       build:st=>{const r=el("div","row");seq.forEach(s=>r.append(el("div","pt",s)));r.append(el("div","qbox","?"));st.append(r)},
       emo:true,opts:shuffle(choices).map(c=>({html:c,ok:c===ans}))}},
   seq(){const max=L().seq,len=5,startN=rand(1,max-len+1),hole=rand(1,len-1);const nums=[];for(let i=0;i<len;i++)nums.push(startN+i);
     const ans=nums[hole];
-    return{text:"火車少了哪一號？",voice:"數字火車少了一節車廂，是幾號呢？",
-      build:st=>{const t=el("div","train");t.append(el("span","loco","🚂"));nums.forEach((n,i)=>t.append(el("div","car"+(i===hole?" q":""),i===hole?"?":n)));st.append(t)},
+    return{text:EN()?"Which number is missing?":"火車少了哪一號？",voice:EN()?"The number train lost a car. Which number is missing?":"數字火車少了一節車廂，是幾號呢？",
+      build:st=>{const tr=el("div","train");tr.append(el("span","loco","🚂"));nums.forEach((n,i)=>tr.append(el("div","car"+(i===hole?" q":""),i===hole?"?":n)));st.append(tr)},
       opts:numOpts(ans,1,max)}}
 };
 
@@ -269,16 +328,17 @@ function next(){if(game.i>=TOTAL)return finish();
 function face(c){const f=$("#face");f.classList.remove("yay","hmm");void f.offsetWidth;f.classList.add(c)}
 function check(b,ok){if(game.lock||b.disabled)return;
   if(ok){game.lock=true;b.classList.add("right");ding();face("yay");if(game.tries===0)game.first++;
-    say(pick(PRAISE));burst(b,24);$("#cones").children[game.i].classList.add("on");
+    say(pick(t().praise));burst(b,24);$("#cones").children[game.i].classList.add("on");
     const id=game.id;setTimeout(()=>{if(id!==game.id||$("#game").hidden)return;game.i++;next()},1500)}
   else{game.tries++;b.classList.add("wrong");b.disabled=true;boop();face("hmm");
-    if(game.tries>=2){const r=[...$("#opts").children].find((x,i)=>game.q.opts[i].ok);r&&r.classList.add("hint");say("松松給你一個提示，看看會跳的那一個！")}
-    else say(pick(RETRY))}}
+    if(game.tries>=2){const r=[...$("#opts").children].find((x,i)=>game.q.opts[i].ok);r&&r.classList.add("hint");say(t().hint)}
+    else say(pick(t().retry))}}
 function finish(){const stars=game.first>=4?3:2;save.stars+=stars;save.mode[game.mode]=(save.mode[game.mode]||0)+stars;
   const sticker=STICKERS[save.rounds%STICKERS.length];save.rounds++;store();
-  $("#wtitle").textContent=stars===3?"超級厲害！":"太棒了！";$("#wstars").textContent="⭐".repeat(stars);
-  $("#wsticker").textContent=sticker;$("#wmsg").textContent=save.rounds<=STICKERS.length?`得到新貼紙！已收集 ${Math.min(save.rounds,STICKERS.length)} / ${STICKERS.length} 張`:`你已經收集全部貼紙了，真是數學大王！`;
-  $("#win").hidden=false;fanfare();confetti();say(`${stars===3?"超級厲害":"太棒了"}！你得到${stars}顆星星，還有一張新貼紙！`)}
+  const w=stars===3?t().win3:t().win2;
+  $("#wtitle").textContent=w;$("#wstars").textContent="⭐".repeat(stars);
+  $("#wsticker").textContent=sticker;$("#wmsg").textContent=save.rounds<=STICKERS.length?t().msg(save.rounds,STICKERS.length):t().msgAll;
+  $("#win").hidden=false;fanfare();confetti();say(t().winV(w,stars))}
 function goHome(){try{speechSynthesis.cancel()}catch(e){};gameId++;game.id=-1;$("#game").hidden=true;$("#win").hidden=true;$("#home").hidden=false;renderHome()}
 $("#back").onclick=goHome;$("#home2").onclick=goHome;$("#replay").onclick=()=>start(game.mode);$("#again").onclick=()=>game.q&&say(game.q.voice);
 
